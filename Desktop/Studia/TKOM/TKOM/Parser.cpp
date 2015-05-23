@@ -10,26 +10,26 @@
 
 Parser::Parser(Lexer lex) : lex(lex) {};
 
-void Parser::error(const char msg[])
+void Parser::error(Token token)
 {
-    std::cout << msg << std::endl;
+    std::cout << "Spodziewany token: " << token.show() << std::endl;
 }
-int Parser::accept(TokenType tt)
+void Parser::accept(TokenType tt)
 {
     if(tokType == tt)
     {
-        tokType = lex.getToken().getType();
-        return 1;
+        token = lex.getToken();
+        tokType = token.getType();
     }
-    return 0;
+    else 
+    {
+        error(token);
+    }
 }
 
-int Parser::expect(TokenType tt)
+void Parser::nextToken()
 {
-    if(accept(tt))
-        return 1;
-    error("expect: unexpected symbol");
-    return 0;
+    tokType = lex.getToken().getType();
 }
 
 void Parser::program(void)

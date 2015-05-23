@@ -13,7 +13,7 @@
 
 int main()
 {
-    std::string filename = "/Users/dani/Desktop/Studia/a/a/main.c";
+    std::string filename = "Token.cpp";
     Scanner scan = *new Scanner(filename);
     Lexer lex = *new Lexer(scan);
     

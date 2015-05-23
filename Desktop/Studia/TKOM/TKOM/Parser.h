@@ -62,9 +62,9 @@ private:
     static Token tok;
     TokenType tokType;
     TokenType buf;
-    void error(const char msg[]);
+    void error(Token token);
     int accept(TokenType tt);
-    int expect(TokenType tt);
+    void nextToken();
 
 };
 

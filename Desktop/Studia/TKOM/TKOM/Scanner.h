@@ -6,6 +6,8 @@
 //  Copyright (c) 2015 Daniel Obrebski. All rights reserved.
 //
 
+
+
 #ifndef __TKOM__Scanner__
 #define __TKOM__Scanner__
 
