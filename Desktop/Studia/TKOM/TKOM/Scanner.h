@@ -26,6 +26,8 @@ public:
     int get();
     void getBack();
     void run();
+    int getColIdx();
+    int getRowIdx();
 
 private:
     std::string fileName;
@@ -33,6 +35,7 @@ private:
     unsigned int rowIdx;
     unsigned int srcIdx;
     unsigned int lastIdx;
+    unsigned int showIdx;
     
     
     

@@ -10,7 +10,7 @@
 #define __TKOM__Character__
 
 #include <stdio.h>
-#include <string.h>
+#include <string>
 #include <sstream>
 
 class Character

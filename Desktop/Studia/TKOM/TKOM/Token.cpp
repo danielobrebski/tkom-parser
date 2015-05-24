@@ -16,21 +16,7 @@ Token::Token(TokenType type, std::string cargo)
 
 void Token::show()
 {
-    if(type == TokenType::Ident)
-    {
-        std::cout << "Type: id " << std::endl;
-        std::cout << "Cargo: " << cargo << std::endl;
-        return;
-    }
-    
-    if(type == TokenType::Number)
-    {
-        std::cout << "Type: Number " << std::endl;
-        std::cout << "Cargo: " << cargo << std::endl;
-        return;
-    }
-    std::cout << "Type: " << (int)type << std::endl;
-    std::cout << "Cargo: " << cargo << std::endl;
+    std::cout << cargo << " " << std::endl;
     
     return;
 

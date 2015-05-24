@@ -10,20 +10,17 @@
 #include "Scanner.h"
 #include "Lexer.h"
 #include "TokenType.h"
+#include "Parser.h"
+#include "Token.h"
 
 int main()
 {
-    std::string filename = "Token.cpp";
+    std::string filename = "/Users/dani/Desktop/Studia/a/a/main.c";
     Scanner scan = *new Scanner(filename);
     Lexer lex = *new Lexer(scan);
+    Parser par = *new Parser(lex);
     
-    while(1)
-    {
-        Token tok = lex.getToken();
-        if(tok.getType() == TokenType::Eof)
-            return 0;
-
-    }
+    par.program();
 
     
 

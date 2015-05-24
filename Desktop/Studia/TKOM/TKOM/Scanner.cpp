@@ -11,9 +11,10 @@
 Scanner::Scanner(std::string fileName)
 {
     this->fileName = fileName;
-    this->colIdx = 0;
-    this->rowIdx = 0;
+    this->colIdx = 1;
+    this->rowIdx = 1;
     this->srcIdx = -1;
+    this->showIdx = -1;
     this->lastIdx = fileLength();
 }
 
@@ -46,6 +47,7 @@ int Scanner::fileLength()
 void Scanner::getBack()
 {
     srcIdx--;
+    colIdx--;
 }
 
 int Scanner::get()
@@ -60,6 +62,7 @@ int Scanner::get()
         return '-2';
     }
     srcIdx++;
+    showIdx++;
     
     if(srcIdx >= 0)
     {
@@ -67,8 +70,9 @@ int Scanner::get()
         file.get(temp);
         if(temp == '\n')
         {
-            colIdx = 0;
+            colIdx = 1;
             rowIdx++;
+            std::cout << std::endl;
         }
     }
     
@@ -86,6 +90,10 @@ int Scanner::get()
         ret[0] = temp;
         Character nChar = *new Character(ret, srcIdx, rowIdx, colIdx, fileName);
         std::string made = nChar.toString();
+        if(showIdx > srcIdx)
+            showIdx = srcIdx;
+        else
+            std::cout << ret[0];
         colIdx++;
         return temp;
     }
@@ -93,6 +101,16 @@ int Scanner::get()
     return '-3';
     
     
+}
+
+int Scanner::getColIdx()
+{
+    return colIdx;
+}
+
+int Scanner::getRowIdx()
+{
+    return rowIdx;
 }
 
 

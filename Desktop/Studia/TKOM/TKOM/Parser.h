@@ -28,9 +28,8 @@ public:
     void ifStatement(void);
     void whileStatement(void);
     void returnStatement(void);
-    void assignmentStatement(void);
+    void assignmentFunctionStatement(int synchronize);
     void initStatement(void);
-    void functionStatement(void);
     
     void assignable(void);
     void expression(void);
@@ -45,8 +44,11 @@ public:
     void incrementCondition(void);
     void primaryCondition(void);
     void parenthCondition(void);
+    void indexOperator(void);
     void variable(void);
     void literal(void);
+    void numberLiteral(void);
+    void matrixLiteral(void);
     
     /*
      literal = numberLiteral | matrixLiteral .
@@ -59,10 +61,10 @@ public:
  
 private:
     Lexer lex;
-    static Token tok;
+    static Token token;
     TokenType tokType;
     TokenType buf;
-    void error(Token token);
+    void error(TokenType tt, int i);
     int accept(TokenType tt);
     void nextToken();
 

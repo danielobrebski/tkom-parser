@@ -21,9 +21,13 @@ class Lexer
 public:
     Lexer(Scanner scan);
     Token getToken();
+    int getColIdx();
+    int getRowIdx();
     
 private:
     Scanner scan;
+    int colIdx;
+    int rowIdx;
 };
 
 #endif /* defined(__TKOM__Lexer___) */
