@@ -8,11 +8,7 @@
 
 #include "Token.h"
 
-Token::Token(TokenType type, std::string cargo)
-{
-    this->type = type;
-    this->cargo = cargo;
-}
+Token::Token(TokenType type, std::string cargo) : type(type), cargo(cargo) {}
 
 void Token::show()
 {
@@ -25,4 +21,9 @@ void Token::show()
 TokenType Token::getType()
 {
     return type;
+}
+
+std::string Token::getCargo()
+{
+    return cargo;
 }

@@ -21,6 +21,7 @@ public:
     Token(TokenType type, std::string cargo);
     void show();
     TokenType getType();
+    std::string getCargo();
     
 private:
     TokenType type;

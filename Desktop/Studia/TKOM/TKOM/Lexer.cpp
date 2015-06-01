@@ -275,7 +275,7 @@ Token Lexer::getToken()
             scan.getBack();
             Token tok = *new Token(TokenType::Comment, "comment");
             //tok.show();
-            return tok;
+            return tok;;
         }
         
         

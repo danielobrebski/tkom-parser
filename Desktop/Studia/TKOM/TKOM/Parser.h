@@ -13,42 +13,42 @@
 
 #include "Lexer.h"
 #include "TokenType.h"
+#include "ExpressionAst.cpp"
 
 class Parser
 {
 public:
     Parser(Lexer lex);
-    void program(void);
-    void functionDef(void);
+    std::vector<FunctionAST> program(void);
+    FunctionAST* functionDef(void);
     void type(void);
-    void parameteres(void);
-    void arguments(void);
-    void statementBlock(void);
-    void forStatement(void);
-    void ifStatement(void);
-    void whileStatement(void);
-    void returnStatement(void);
-    void assignmentFunctionStatement(int synchronize);
-    void initStatement(void);
+    std::vector<std::string> parameteres(void);
+    std::vector<ExprAST*> arguments(void);
+    ExprAST* statementBlock(void);
+    ExprAST* forStatement(void);
+    ExprAST* ifStatement(void);
+    ExprAST* whileStatement(void);
+    ExprAST* returnStatement(void);
+    ExprAST* assignmentFunctionStatement(int synchronize);
+    ExprAST* initStatement(void);
     
-    void assignable(void);
-    void expression(void);
-    void multiplicativeExpression(void);
-    void logicalShiftExpression(void);
-    void primaryExpression(void);
-    void parenthExpression(void);
-    void condition(void);
-    void andCondition(void);
-    void equalityCondition(void);
-    void relationalCondition(void);
-    void incrementCondition(void);
-    void primaryCondition(void);
-    void parenthCondition(void);
-    void indexOperator(void);
-    void variable(void);
-    void literal(void);
-    void numberLiteral(void);
-    void matrixLiteral(void);
+    ExprAST* assignable(void);
+    ExprAST* expression(void);
+    ExprAST* multiplicativeExpression(void);
+    ExprAST* logicalShiftExpression(void);
+    ExprAST* primaryExpression(void);
+    ExprAST* parenthExpression(void);
+    ExprAST* condition(void);
+    ExprAST* andCondition(void);
+    ExprAST* equalityCondition(void);
+    ExprAST* relationalCondition(void);
+    ExprAST* primaryCondition(void);
+    ExprAST* parenthCondition(void);
+    ExprAST* indexOperator(void);
+    ExprAST* variable(void);
+    ExprAST* literal(void);
+    ExprAST* numberLiteral(void);
+    ExprAST* matrixLiteral(void);
     
     /*
      literal = numberLiteral | matrixLiteral .
@@ -61,7 +61,7 @@ public:
  
 private:
     Lexer lex;
-    static Token token;
+    Token token = *new Token(TokenType::Unknown, "");
     TokenType tokType;
     TokenType buf;
     void error(TokenType tt, int i);

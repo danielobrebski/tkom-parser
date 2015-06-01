@@ -281,22 +281,31 @@ int Parser::accept(TokenType tt)
 
 void Parser::nextToken()
 {
-    tokType = lex.getToken().getType();
+    token = lex.getToken();
+    tokType = token.getType();
 }
 
-void Parser::program(void)
+std::vector<FunctionAST> Parser::program(void)
 {
+    std::vector<FunctionAST> functions;
     nextToken();
-    while(tokType == TokenType::Int || tokType == TokenType::Int || tokType == TokenType::Long || tokType == TokenType::Float|| tokType == TokenType::Double)
-            functionDef();
+    while(tokType == TokenType::Int || tokType == TokenType::Long || tokType == TokenType::Float|| tokType == TokenType::Double)
+        functions.push_back(*functionDef());
+    return functions;
+    
 }
 
-void Parser::functionDef(void)
+FunctionAST* Parser::functionDef(void)
 {
+    ExprAST *body;
     type();
+    std::string name = token.getCargo();
     accept(TokenType::Ident);
-    parameteres();
-    statementBlock();
+    std::vector<std::string> para = parameteres();
+    PrototypeAST *proto = new PrototypeAST(name,para);
+    body = statementBlock();
+   
+    return new FunctionAST(proto, body);
 }
 
 void Parser::type(void)
@@ -309,74 +318,81 @@ void Parser::type(void)
         error(tokType, 1);
 }
 
-void Parser::parameteres(void)
+std::vector<std::string> Parser::parameteres(void)
 {
+    std::vector<std::string> params;
+    
     accept(TokenType::LeftParenthes);
     if(tokType == TokenType::Int || tokType == TokenType::Long || tokType == TokenType::Float|| tokType == TokenType::Double)
     {
         type();
+        params.push_back(token.getCargo());
         accept(TokenType::Ident);
         while(tokType == TokenType::Comma)
         {
             nextToken();
             type();
+            params.push_back(token.getCargo());
             accept(TokenType::Ident);
         }
     }
     accept(TokenType::RightParenthes);
+    return params;
     
 }
 
-void Parser::arguments(void)
+std::vector<ExprAST*> Parser::arguments(void)
 {
+    std::vector<ExprAST*> args;
     accept(TokenType::LeftParenthes);
-    assignable();
+    args.push_back(assignable());
     while(tokType == TokenType::Comma)
     {
         nextToken();
-        assignable();
+        args.push_back(assignable());
     }
     accept(TokenType::RightParenthes);
-    
+    return args;
 }
 
-void Parser::statementBlock(void)
+ExprAST* Parser::statementBlock(void)
 {
     accept(TokenType::LeftBrace);
+    ExprAST *stmt = nullptr;
     int ret = 1;
     while(ret == 1)
     {
         switch (tokType)
         {
             case TokenType::For:
-                forStatement();
+                stmt = forStatement();
                 break;
                 ;
             
             case TokenType::If:
-                ifStatement();
+                stmt = ifStatement();
                 break;
                 ;
             
             case TokenType::While:
-                whileStatement();
+                stmt = whileStatement();
                 break;
                 ;
             
             case TokenType::Return:
-                returnStatement();
+                stmt = returnStatement();
                 break;
                 ;
             
             
             case TokenType::Ident:
-                assignmentFunctionStatement(0);
+                stmt = assignmentFunctionStatement(0);
                 accept(TokenType::SemiCollon);
                 break;
                 ;
             
             case TokenType::LeftBrace:
-                statementBlock();
+                stmt = statementBlock();
                 break;
                 ;
             
@@ -385,7 +401,7 @@ void Parser::statementBlock(void)
             case TokenType::Float:
             case TokenType::Double:
             case TokenType::Static:
-                initStatement();
+                stmt = initStatement();
                 accept(TokenType::SemiCollon);
                 break;
                 ;
@@ -396,292 +412,375 @@ void Parser::statementBlock(void)
         }
     }
     accept(TokenType::RightBrace);
+    
+    return stmt;
 }
 
-void Parser::forStatement(void)
+ExprAST* Parser::forStatement(void)
 {
+    std::vector<ExprAST*> ass1, ass2, cond;
+    ExprAST *block;
+    
     accept(TokenType::For);
     accept(TokenType::LeftParenthes);
     
     if(tokType == TokenType::Ident)
     {
-        assignmentFunctionStatement(0);
+        ass1.push_back(assignmentFunctionStatement(0));
         while(tokType == TokenType::Comma)
         {
             nextToken();
-            assignmentFunctionStatement(0);
+            ass1.push_back(assignmentFunctionStatement(0));
         }
 
     }
     
     accept(TokenType::SemiCollon);
-    condition();
+    cond.push_back(condition());
     accept(TokenType::SemiCollon);
     
     if(tokType == TokenType::Ident)
     {
-        assignmentFunctionStatement(0);
+        ass2.push_back(assignmentFunctionStatement(0));
         while(tokType == TokenType::Comma)
         {
             nextToken();
-            assignmentFunctionStatement(0);
+            ass2.push_back(assignmentFunctionStatement(0));
         }
         
     }
     accept(TokenType::RightParenthes);
-    statementBlock();
+    block = statementBlock();
+    return new ForExprAST(&ass1, &cond, &ass2, block);
 }
 
-void Parser::ifStatement(void)
+ExprAST* Parser::ifStatement(void)
 {
+    ExprAST *cond, *block;
+    ExprAST *els = nullptr;
     accept(TokenType::If);
     accept(TokenType::LeftParenthes);
-    statementBlock();
+    cond = condition();
+    accept(TokenType::RightParenthes);
+    block = statementBlock();
     if(accept(TokenType::Else))
-        statementBlock();
+        els = statementBlock();
+    return new IfExprAST(cond, block, els);
 }
 
-void Parser::whileStatement(void)
+ExprAST* Parser::whileStatement(void)
 {
+    ExprAST *cond, *block;
     accept(TokenType::While);
     accept(TokenType::LeftParenthes);
-    condition();
+    cond = condition();
     accept(TokenType::RightParenthes);
-    statementBlock();
+    block = statementBlock();
+    
+    return new WhileExprAST(cond, block);
     
 }
 
-void Parser::returnStatement(void)
+ExprAST* Parser::returnStatement(void)
 {
+    ExprAST *assb;
     accept(TokenType::Return);
-    assignable();
+    assb = assignable();
     accept(TokenType::SemiCollon);
+    return assb;
 }
 
-void Parser::assignmentFunctionStatement(int synchronize)
+ExprAST* Parser::assignmentFunctionStatement(int synchronize)
 {
-    variable();
+    ExprAST *lhs, *rhs;
+    ExprAST *ret;
+    std::vector<ExprAST*> args;
+    lhs = variable();
     if(synchronize == 1 || synchronize == 0)
     {
         if(tokType == TokenType::LeftParenthes)
         {
-            arguments();
-            return;
+            args = arguments();
+            return new CallExprAST(lhs, args);
         }
     }
     if(synchronize == 0)
     {
         if(tokType == TokenType::Decrement || tokType == TokenType::Increment)
+        {
+            ret = new IncrementExprAST(token.getCargo(), lhs);
             nextToken();
+            return ret;
+        }
         else if(tokType == TokenType::Assign || tokType == TokenType::PlusEqual || tokType == TokenType::MinusEqual || tokType == TokenType::MultiplyEqual || tokType == TokenType::DivideEqual)
         {
+            std::string op = token.getCargo();
             nextToken();
-            assignable();
+            rhs = assignable();
+            ret = new AssignmentExprAST(op, lhs, rhs);
+            return ret;
         }
     }
+    return nullptr;
 }
 
-void Parser::initStatement(void)
+ExprAST* Parser::initStatement(void)
 {
+    ExprAST *var, *ass = nullptr;
     type();
-    variable();
+    var = variable();
     if(tokType == TokenType::Assign)
     {
         nextToken();
-        assignable();
+        ass = assignable();
     }
+    return new InitialExprAST(var, ass);
 }
 
 
-void Parser::assignable(void)
+ExprAST* Parser::assignable(void)
 {
-        expression();
+    ExprAST* expr;
+    expr = expression();
+    return expr;
 }
 
-void Parser::expression(void)
+ExprAST* Parser::expression(void)
 {
-    multiplicativeExpression();
-    if(tokType == TokenType::Plus || tokType == TokenType::Minus)
+    ExprAST *LHS;
+    std::vector<ExprAST*> RHS;
+    std::vector<std::string> op;
+    LHS = multiplicativeExpression();
+    while(tokType == TokenType::Plus || tokType == TokenType::Minus)
     {
+        op.push_back(token.getCargo());
         nextToken();
-        multiplicativeExpression();
+        RHS.push_back(multiplicativeExpression());
     }
+    return new ArithmeticExprAST(op, LHS, RHS);
 }
 
-void Parser::multiplicativeExpression(void)
+ExprAST* Parser::multiplicativeExpression(void)
 {
-    logicalShiftExpression();
-    if(tokType == TokenType::Multiply || tokType == TokenType::Slash)
+    ExprAST *LHS;
+    std::vector<ExprAST*> RHS;
+    std::vector<std::string> op;
+    LHS = logicalShiftExpression();
+    while(tokType == TokenType::Multiply || tokType == TokenType::Divide || tokType == TokenType::Slash)
     {
+        op.push_back(token.getCargo());
         nextToken();
-        logicalShiftExpression();
+        RHS.push_back(logicalShiftExpression());
     }
+    
+    return new ArithmeticExprAST(op, LHS, RHS);
 
 }
 
-void Parser::logicalShiftExpression(void)
+ExprAST* Parser::logicalShiftExpression(void)
 {
-    primaryExpression();
-    if(tokType == TokenType::LeftLogicalShift || tokType == TokenType::RightLogicalShift)
+    ExprAST *LHS;
+    std::vector<ExprAST*> RHS;
+    std::vector<std::string> op;
+    LHS = primaryExpression();
+    while(tokType == TokenType::LeftLogicalShift || tokType == TokenType::RightLogicalShift)
     {
+        op.push_back(token.getCargo());
         nextToken();
-        primaryExpression();
+        RHS.push_back(primaryExpression());
     }
+    return new ArithmeticExprAST(op, LHS, RHS);
 }
 
-void Parser::primaryExpression(void)
+ExprAST* Parser::primaryExpression(void)
 {
+    ExprAST *ret = nullptr;
+
     if(tokType == TokenType::Minus || tokType == TokenType::Number || tokType == TokenType::LeftBrace)
-        literal();
+        ret = literal();
     
     else if(tokType == TokenType::Ident)
-        variable();
+        ret = variable();
     
     else if(tokType == TokenType::LeftParenthes)
-        parenthExpression();
-    
-    else
-        error(tokType, 1);
+        ret = parenthExpression();
+    return ret;
 }
 
-void Parser::parenthExpression(void)
+ExprAST* Parser::parenthExpression(void)
 {
+    ExprAST *ret;
     accept(TokenType::LeftParenthes);
-    expression();
+    ret = expression();
     accept(TokenType::RightParenthes);
+    return ret;
 }
 
-void Parser::condition(void)
+ExprAST* Parser::condition(void)
 {
-    andCondition();
-    while(tokType == TokenType::Comma || tokType == TokenType::Or)
+    ExprAST *LHS, *RHS = nullptr;
+    std::string op;
+    LHS = andCondition();
+    if(tokType == TokenType::Comma || tokType == TokenType::Or)
     {
+        op = token.getCargo();
         nextToken();
-        andCondition();
+        RHS = andCondition();
     }
+    return new ConditionExprAST(op, LHS, RHS);
 }
 
-void Parser::andCondition(void)
+ExprAST* Parser::andCondition(void)
 {
-    equalityCondition();
-    while(tokType == TokenType::And)
+    ExprAST *LHS, *RHS = nullptr;
+    std::string op;
+    LHS = equalityCondition();
+    if(tokType == TokenType::And)
     {
+        op = token.getCargo();
         nextToken();
-        equalityCondition();
+        RHS = equalityCondition();
     }
+    return new ConditionExprAST(op, LHS, RHS);
 
 }
 
-void Parser::equalityCondition(void)
+ExprAST* Parser::equalityCondition(void)
 {
-    relationalCondition();
-    while(tokType == TokenType::Equal || tokType == TokenType::NotEqual)
+    ExprAST *LHS, *RHS = nullptr;
+    std::string op;
+    LHS = relationalCondition();
+    if(tokType == TokenType::Equal || tokType == TokenType::NotEqual)
     {
+        op = token.getCargo();
         nextToken();
-        relationalCondition();
+        RHS = relationalCondition();
     }
+    return new ConditionExprAST(op, LHS, RHS);
 
 }
 
-void Parser::relationalCondition(void)
+ExprAST* Parser::relationalCondition(void)
 {
-    incrementCondition();
-    while(tokType == TokenType::LessThan || tokType == TokenType::LessThanOrEqual || tokType == TokenType::MoreThan || tokType == TokenType::MoreThanOrEqual)
+    ExprAST *LHS, *RHS = nullptr;
+    std::string op;
+    LHS = primaryCondition();
+    if(tokType == TokenType::LessThan || tokType == TokenType::LessThanOrEqual || tokType == TokenType::MoreThan || tokType == TokenType::MoreThanOrEqual)
     {
+        op = token.getCargo();
         nextToken();
-        incrementCondition();
+        RHS = primaryCondition();
     }
+    return new ConditionExprAST(op, LHS, RHS);
 
 }
 
-void Parser::incrementCondition(void)
+ExprAST* Parser::primaryCondition(void)
 {
-    primaryCondition();
-    while(tokType == TokenType::Increment || tokType == TokenType::Decrement)
-    {
-        nextToken();
-        primaryCondition();
-    }
-
-}
-
-void Parser::primaryCondition(void)
-{
-    if(tokType == TokenType::Minus)
-        nextToken();
+    ExprAST* ret = nullptr;
     
     if(tokType == TokenType::Minus || tokType == TokenType::Number || tokType == TokenType::LeftBrace)
-        literal();
+        ret = literal();
     
     else if(tokType == TokenType::Ident)
-        variable();
+        ret = variable();
     
     else if(tokType == TokenType::LeftParenthes)
-        parenthCondition();
+        ret = parenthCondition();
     
-
+    return ret;
     
 }
 
-void Parser::parenthCondition(void)
+ExprAST* Parser::parenthCondition(void)
 {
+    ExprAST *ret;
     accept(TokenType::LeftParenthes);
-    condition();
+    ret = condition();
     accept(TokenType::RightParenthes);
+    return ret;
 }
 
-void Parser::indexOperator(void)
+ExprAST* Parser::indexOperator(void)
 {
+    ExprAST *LHS, *RHS = nullptr;
     accept(TokenType::LeftBracket);
-    assignable();
+    LHS = assignable();
     accept(TokenType::RightBracket);
     if(tokType == TokenType::LeftBracket)
     {
         nextToken();
-        assignable();
+        RHS = assignable();
         accept(TokenType::RightBracket);
     }
+    return new IndexExprAST(LHS, RHS);
 }
 
-void Parser::variable(void)
+ExprAST* Parser::variable(void)
 {
+    std::string name = token.getCargo();
+    ExprAST *expr = nullptr;
     accept(TokenType::Ident);
     if(tokType == TokenType::LeftBracket)
-        indexOperator();
+    {
+        expr = indexOperator();
+    }
+    return new VariableExprAST(name, expr);
 }
 
-void Parser::literal(void)
+ExprAST* Parser::literal(void)
 {
+    ExprAST *literal;
     if(tokType == TokenType::Minus || tokType == TokenType::Number)
-        numberLiteral();
+        literal = numberLiteral();
     else if(tokType == TokenType::LeftBrace)
-        matrixLiteral();
+    {
+        literal = matrixLiteral();
+    }
     
     else
+    {
+        literal = nullptr;
         error(tokType, 1);
-}
-
-void Parser::numberLiteral(void)
-{
-    if(tokType == TokenType::Minus)
-        nextToken();
-    accept(TokenType::Number);
-}
-
-void Parser::matrixLiteral(void)
-{
+    }
     
+    return literal;
+}
+
+ExprAST* Parser::numberLiteral(void)
+{
+    double val = 0;
+    if(tokType == TokenType::Minus)
+    {
+        val = -val;
+        nextToken();
+    }
+    
+    val+=stoi(token.getCargo());
+    accept(TokenType::Number);
+    return new NumberExprAST(val);
+}
+
+ExprAST* Parser::matrixLiteral(void)
+{
+    std::vector<std::vector<double> > tempvec;
+    std::vector<double> row;
     accept(TokenType::LeftBrace);
     while(tokType == TokenType::LeftBrace)
     {
         nextToken();
+        row.push_back(stod(token.getCargo()));
+        
         accept(TokenType::Number);
         while(tokType == TokenType::Comma)
         {
             nextToken();
+            row.push_back(stod(token.getCargo()));
             accept(TokenType::Number);
             
         }
+        tempvec.push_back(row);
+        row.clear();
         accept(TokenType::RightBrace);
         if(tokType == TokenType::Comma)
             nextToken();
@@ -689,4 +788,6 @@ void Parser::matrixLiteral(void)
             break;
     }
     accept(TokenType::RightBrace);
+    
+    return new MatrixExprAST(tempvec);
 }
